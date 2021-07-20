@@ -186,11 +186,15 @@ class Tools
 
     public static function getAvPort()
     {
-        //检索User数据表现有port
-        $det = User::pluck('port')->toArray();
-        $port = array_diff(range($_ENV['min_port'], $_ENV['max_port']), $det);
-        shuffle($port);
-        return $port[0];
+        if ($_ENV['min_port'] > 65535 || $_ENV['min_port'] <= 0 || $_ENV['max_port'] > 65535 || $_ENV['max_port'] <= 0) {
+            return 0;
+        }
+        else {
+            $det = User::pluck('port')->toArray();
+            $port = array_diff(range($_ENV['min_port'], $_ENV['max_port']), $det);
+            shuffle($port);
+            return $port[0];
+        }
     }
 
     public static function base64_url_encode($input)
@@ -541,9 +545,9 @@ class Tools
         }
 
         return [
-            'name' => ($_ENV['disable_sub_mu_port'] ? $node_name : $node_name . ' - ' . $node_port . ' 单端口'),
+            'name'    => ($_ENV['disable_sub_mu_port'] ? $node_name : $node_name . ' - ' . $node_port . ' 单端口'),
             'address' => $node_server[0],
-            'port' => $node_port
+            'port'    => (int) $node_port
         ];
     }
 
@@ -808,7 +812,7 @@ class Tools
      * @param DatatablesHelper $db
      * @param string $table
      */
-    public function reset_auto_increment($db, $table)
+    public static function reset_auto_increment($db, $table)
     {
         $maxid = $db->query(
             "SELECT `auto_increment` AS `maxid` FROM `information_schema`.`tables` WHERE `table_schema` = '" . $_ENV['db_database'] . "' AND `table_name` = '" . $table . "'"
@@ -888,5 +892,10 @@ class Tools
         }
         $html .= '</ul>';
         return $html;
+    }
+
+    public static function etag($data) {
+        $etag = sha1(json_encode($data));
+        return $etag;
     }
 }
